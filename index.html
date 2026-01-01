@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tài Xỉu - Made by Phuhot </title>
+    <title>Tài Xỉu V12 - Online Sync</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -114,8 +114,8 @@
 
     <div class="modal" id="loginModal" style="display:flex;">
         <div class="modal-content" style="padding: 20px;">
-            <h2 style="color:var(--gold-1); margin:0 0 10px 0; text-align: center;">🔥 ĐẠI GIA SÂN CỎ 🔥</h2>
-            <p style="color:#aaa; font-size:14px; text-align: center;">V11 Stable - Phuhot.</p>
+            <h2 style="color:var(--gold-1); margin:0 0 10px 0; text-align: center;">🔥 ONLINE SYNC V12 🔥</h2>
+            <p style="color:#aaa; font-size:14px; text-align: center;">Kết quả đồng bộ thời gian thực.</p>
             <input type="text" id="usernameInput" class="login-input" placeholder="Tên Đại Gia..." onkeypress="if(event.keyCode==13) login()">
             <button class="btn-action btn-confirm" style="padding:15px; width:80%; align-self:center; font-size: 16px;" onclick="login()">VÀO SÒNG</button>
         </div>
@@ -190,11 +190,11 @@
         let currentBet = 0, sideChosen = null;
         let isLocked = false, isResultReady = false, diceResults = [0,0,0];
         let usersTai = 0, usersXiu = 0;
-        let mainLoop; 
-        let hasPaid = false; // Cờ kiểm tra đã trả thưởng chưa trong phiên này
+        let mainLoop, hasPaid = false; 
 
         const PHASE_BET = 45;
         const PHASE_LOCK = 50;
+
         // NPC DATA
         let npcPlayers = [ { name: "Top1_Server", bal: 50000000000 }, { name: "Shark Hưng", bal: 23000000000 }, { name: "Đại Gia 79", bal: 12500000000 }, { name: "Trùm Đất Cảng", bal: 8900000000 }, { name: "Thiếu Gia HN", bal: 5600000000 }, { name: "Chị Đại Q4", bal: 3200000000 }, { name: "Vua Lì Đòn", bal: 1500000000 }, { name: "Thánh Bịp", bal: 800000000 }, { name: "Boy Phố Cổ", bal: 450000000 }, { name: "Dân Chơi 9x", bal: 100000000 } ];
         
@@ -213,7 +213,7 @@
             currentUser = u;
             document.getElementById('playerName').innerText = currentUser;
             document.getElementById('loginModal').style.display = 'none';
-            const stored = localStorage.getItem('taixiu_v11_' + currentUser);
+            const stored = localStorage.getItem('taixiu_v12_' + currentUser);
             if(stored) {
                 const d = JSON.parse(stored);
                 balance = d.b; transactionHistory = d.t || []; beadHistory = d.bd || [];
@@ -224,8 +224,15 @@
             updateBalance(); renderTransHistory(); beadHistory.forEach(r => renderBead(r));
             checkDonateButton(); initFakeUsers(); startRealtimeLoop(); startFakeChat(); changeVolume(0.5);
         }
-        function saveData() { if(currentUser) localStorage.setItem('taixiu_v11_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
+        function saveData() { if(currentUser) localStorage.setItem('taixiu_v12_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
         function logout() { location.reload(); }
+
+        // --- SEEDED RANDOM (ĐÂY LÀ CHÌA KHÓA ĐỂ ĐỒNG BỘ) ---
+        // Hàm tạo số ngẫu nhiên dựa trên "Hạt giống" (Seed)
+        function seededRandom(seed) {
+            var x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
 
         // --- REALTIME LOOP ---
         function startRealtimeLoop() {
@@ -235,19 +242,18 @@
                 updateFakeUsers();
 
                 if (seconds < PHASE_BET) {
-                    // GIAI ĐOẠN CƯỢC (0-45s)
+                    // GIAI ĐOẠN CƯỢC
                     let dTime = PHASE_BET - seconds;
                     document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "#ff3333";
                     document.getElementById('statusText').innerText = "MỜI ĐẶT CƯỢC";
                     if (isLocked) {
-                        // Reset ván mới
                         isLocked = false; hasPaid = false; isResultReady = false;
                         document.getElementById('controls').style.opacity="1"; document.getElementById('controls').style.pointerEvents="auto";
                         resetBowl(); currentBet = 0; sideChosen = null; updateUI(); initFakeUsers();
                     }
                 } else if (seconds < PHASE_LOCK) {
-                    // GIAI ĐOẠN KHÓA (45-50s)
+                    // GIAI ĐOẠN KHÓA
                     let dTime = PHASE_LOCK - seconds;
                     document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "yellow";
@@ -260,36 +266,46 @@
                     // GIAI ĐOẠN XỬ LÝ (50s-59s)
                     document.getElementById('timerDisplay').innerText = "00";
                     if (!isResultReady) {
-                        // Chưa có kết quả -> Lắc
-                        rollDice(); 
+                        rollDiceSynced(); // Lắc theo đồng bộ
                     } else {
-                        // Đã có kết quả -> Chờ mở
-                        if(!hasPaid) {
-                            // Nếu hết giờ mà chưa mở -> Tự mở
-                            // Nhưng để người chơi nặn, ta ko tự mở ngay lập tức ở s50
-                            // Ta đợi đến s58 mới tự mở nếu họ lì ko mở
-                             if(seconds > 58) forceOpenBowl();
-                        }
+                        if(!hasPaid && seconds > 58) forceOpenBowl();
                     }
                 }
             }, 1000);
         }
 
         const diceChars = ["1", "2", "3", "4", "5", "6"];
-        function rollDice() {
+        
+        // HÀM LẮC ĐỒNG BỘ (QUAN TRỌNG)
+        function rollDiceSynced() {
             playSfx('sfxShake'); const bowl = document.getElementById('bowl'); bowl.classList.add('shaking'); document.getElementById('statusText').innerText="ĐANG LẮC...";
-            isResultReady = true; // Đánh dấu đã lắc
+            isResultReady = true;
+            
+            // Lấy thời gian hiện tại làm hạt giống (theo Phút)
+            const now = new Date();
+            // Seed = Số phút tính từ năm 1970 (đảm bảo mỗi phút là 1 seed duy nhất)
+            const seed = Math.floor(now.getTime() / 60000); 
+            
+            // Dùng seed để tạo 3 số ngẫu nhiên GIỐNG HỆT NHAU trên mọi máy
+            const r1 = seededRandom(seed);
+            const r2 = seededRandom(seed + 1);
+            const r3 = seededRandom(seed + 2);
+            
+            diceResults = [
+                Math.floor(r1 * 6) + 1,
+                Math.floor(r2 * 6) + 1,
+                Math.floor(r3 * 6) + 1
+            ];
+
             setTimeout(() => {
                 bowl.classList.remove('shaking');
-                diceResults=[Math.floor(Math.random()*6)+1, Math.floor(Math.random()*6)+1, Math.floor(Math.random()*6)+1];
                 document.getElementById('d1').innerText=diceResults[0]; document.getElementById('d2').innerText=diceResults[1]; document.getElementById('d3').innerText=diceResults[2];
                 document.getElementById('statusText').innerText="MỞ BÁT! (NẶN ĐÊ)";
             }, 1500);
         }
 
-        // Logic checkWin quan trọng
         function checkWin() {
-            if(hasPaid) return; // Đã trả rồi thì thôi
+            if(hasPaid) return; 
             hasPaid = true;
 
             const total = diceResults[0]+diceResults[1]+diceResults[2];
@@ -310,7 +326,7 @@
             updateBalance(); checkDonateButton(); saveData();
         }
 
-        // --- DRAG ---
+        // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
         const bowl=document.getElementById('bowl'); let isD=false, sX, sY, iL, iT;
         function resetBowl(){ bowl.style.transition="transform 0.5s, opacity 0.5s"; bowl.style.transform="translate(0,0)"; bowl.style.opacity="1"; setTimeout(()=>bowl.style.transition="none",500); }
         bowl.addEventListener('mousedown', sD); bowl.addEventListener('touchstart', sD, {passive:false});
@@ -319,43 +335,10 @@
         function dD(e){ if(!isD)return; e.preventDefault(); let c=e.touches?e.touches[0]:e; bowl.style.transform=`translate(${iL+c.clientX-sX}px, ${iT+c.clientY-sY}px)`; }
         document.addEventListener('mouseup', eD); document.addEventListener('touchend', eD);
         function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
-        
-        // Hàm mở bát bắt buộc
-        function forceOpenBowl() { 
-            if(hasPaid) return; // Nếu đã trả thưởng rồi thì ko chạy lại
-            const bowl=document.getElementById('bowl'); 
-            bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; 
-            checkWin(); 
-        }
-
-        // --- CHAT SYSTEM (SIÊU TỐC) ---
-        function pushChatSystem(list, isVip) {
-            const name = isVip ? "ĐẠI GIA" : npcNames[Math.floor(Math.random() * npcNames.length)];
-            const msg = list[Math.floor(Math.random() * list.length)];
-            const color = isVip ? "#ffd700" : `hsl(${Math.random() * 360}, 80%, 70%)`;
-            const box = document.getElementById('chatList');
-            box.innerHTML += `<div class="chat-msg"><span style="color:${color};font-weight:bold">${name}:</span> <span style="color:#eee">${msg}</span></div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-        function startFakeChat() { 
-            // Tốc độ chat: 0.2s - 0.8s (Nhanh hơn V10)
-            const d = Math.floor(Math.random() * 600) + 200; 
-            setTimeout(()=>{
-                // Chỉ chat nhảm khi chưa có kết quả
-                if(!hasPaid) pushChatSystem(chatWaiting, false); 
-                startFakeChat();
-            }, d); 
-        }
-        function burstChat(r) { 
-            // SPAM 10 tin nhắn liên tục khi có kết quả
-            let c=0; 
-            const i=setInterval(()=>{
-                pushChatSystem(r==='TAI'?chatWinTai:chatWinXiu, false);
-                c++; if(c>10) clearInterval(i);
-            }, 100); 
-        }
-
-        // --- UTILS ---
+        function forceOpenBowl() { if(hasPaid) return; const bowl=document.getElementById('bowl'); bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; checkWin(); }
+        function pushChatSystem(list, isVip) { const name = isVip ? "ĐẠI GIA" : npcNames[Math.floor(Math.random() * npcNames.length)]; const msg = list[Math.floor(Math.random() * list.length)]; const color = isVip ? "#ffd700" : `hsl(${Math.random() * 360}, 80%, 70%)`; const box = document.getElementById('chatList'); box.innerHTML += `<div class="chat-msg"><span style="color:${color};font-weight:bold">${name}:</span> <span style="color:#eee">${msg}</span></div>`; box.scrollTop = box.scrollHeight; }
+        function startFakeChat() { const d = Math.floor(Math.random() * 600) + 200; setTimeout(()=>{ if(!hasPaid) pushChatSystem(chatWaiting, false); startFakeChat(); }, d); }
+        function burstChat(r) { let c=0; const i=setInterval(()=>{ pushChatSystem(r==='TAI'?chatWinTai:chatWinXiu, false); c++; if(c>10) clearInterval(i); }, 100); }
         function updateNPCBalances() { npcPlayers.forEach(npc => { const isWin = Math.random() > 0.5; const changeAmt = Math.floor(npc.bal * (Math.random()*0.2)); if(isWin) npc.bal += changeAmt; else npc.bal -= changeAmt; if(npc.bal < 0) npc.bal = 0; }); }
         function renderLeaderboard() { let fullList = [...npcPlayers]; if(currentUser) fullList.push({ name: currentUser, bal: balance, isMe: true }); fullList.sort((a, b) => b.bal - a.bal); const tbody = document.getElementById('rankList'); let html = ''; fullList.forEach((p, index) => { let rankClass = ''; if(index === 0) rankClass = 'rank-top1'; else if(index === 1) rankClass = 'rank-top2'; else if(index === 2) rankClass = 'rank-top3'; let rowClass = p.isMe ? 'rank-me' : ''; html += `<tr class="${rowClass}"><td class="${rankClass}">#${index + 1}</td><td class="${rankClass}">${p.name} ${p.isMe ? '(Tôi)' : ''}</td><td style="text-align:right; color:#ddd">${formatMoney(p.bal)}</td></tr>`; }); tbody.innerHTML = html; }
         function openRankModal() { renderLeaderboard(); document.getElementById('rankModal').style.display = 'flex'; }
@@ -386,4 +369,3 @@
     </script>
 </body>
 </html>
-
