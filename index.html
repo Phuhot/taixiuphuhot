@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tài Xỉu V10 - Đua Top Server</title>
+    <title>Tài Xỉu - Made by Phuhot title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -56,7 +56,7 @@
         .chat-container { position: fixed; right: 10px; top: 70px; bottom: 80px; width: 240px; background: rgba(0,0,0,0.7); border: 1px solid var(--gold-3); border-radius: 10px; display: flex; flex-direction: column; z-index: 5; pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
         .chat-header { background: linear-gradient(to right, #333, #111); padding: 8px; text-align: center; font-size: 12px; font-weight: bold; border-radius: 10px 10px 0 0; color: var(--gold-1); border-bottom: 1px solid #444; }
         .chat-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; text-shadow: 1px 1px 0 #000; pointer-events: auto; scrollbar-width: thin; }
-        .chat-msg { margin-bottom: 8px; line-height: 1.4; animation: fadeIn 0.2s; word-wrap: break-word; }
+        .chat-msg { margin-bottom: 8px; line-height: 1.4; animation: fadeIn 0.1s; word-wrap: break-word; }
         @media (max-width: 900px) { .chat-container { display: none; } }
         .donate-container { position: fixed; left: 10px; top: 140px; z-index: 50; display: flex; flex-direction: column; align-items: center; }
         .donate-btn { width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #e91e63, #880e4f); border: 3px solid #fff; box-shadow: 0 0 15px #ff4081; color: #fff; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
@@ -115,7 +115,7 @@
     <div class="modal" id="loginModal" style="display:flex;">
         <div class="modal-content" style="padding: 20px;">
             <h2 style="color:var(--gold-1); margin:0 0 10px 0; text-align: center;">🔥 ĐẠI GIA SÂN CỎ 🔥</h2>
-            <p style="color:#aaa; font-size:14px; text-align: center;">V10 - Đua Top Đáy Xã Hội.</p>
+            <p style="color:#aaa; font-size:14px; text-align: center;">V11 Stable - Fix lỗi & Chat Xôm.</p>
             <input type="text" id="usernameInput" class="login-input" placeholder="Tên Đại Gia..." onkeypress="if(event.keyCode==13) login()">
             <button class="btn-action btn-confirm" style="padding:15px; width:80%; align-self:center; font-size: 16px;" onclick="login()">VÀO SÒNG</button>
         </div>
@@ -178,13 +178,8 @@
 
     <div class="modal" id="rankModal">
         <div class="modal-content">
-            <div class="modal-header"><span style="font-weight:bold; color:var(--gold-1)">🏆 BẢNG XẾP HẠNG ĐẠI GIA</span><button class="btn-action btn-cancel" style="padding:5px 10px; margin:0;" onclick="closeRankModal()">×</button></div>
-            <div class="modal-body">
-                <table class="rank-table">
-                    <thead><tr><th>TOP</th><th>ĐẠI GIA</th><th style="text-align:right">TÀI SẢN (VNĐ)</th></tr></thead>
-                    <tbody id="rankList"></tbody>
-                </table>
-            </div>
+            <div class="modal-header"><span style="font-weight:bold; color:var(--gold-1)">🏆 BẢNG XẾP HẠNG</span><button class="btn-action btn-cancel" style="padding:5px 10px; margin:0;" onclick="closeRankModal()">×</button></div>
+            <div class="modal-body"><table class="rank-table"><thead><tr><th>TOP</th><th>ĐẠI GIA</th><th style="text-align:right">TÀI SẢN (VNĐ)</th></tr></thead><tbody id="rankList"></tbody></table></div>
         </div>
     </div>
 
@@ -195,24 +190,15 @@
         let currentBet = 0, sideChosen = null;
         let isLocked = false, isResultReady = false, diceResults = [0,0,0];
         let usersTai = 0, usersXiu = 0;
-        const PHASE_BET = 45, PHASE_LOCK = 50;
+        let mainLoop; 
+        let hasPaid = false; // Cờ kiểm tra đã trả thưởng chưa trong phiên này
 
-        // --- NPC & LEADERBOARD ---
-        // Danh sách NPC cố định (giả lập server)
-        let npcPlayers = [
-            { name: "Top1_Server", bal: 50000000000 }, // 50 Tỷ
-            { name: "Shark Hưng", bal: 23000000000 },
-            { name: "Đại Gia 79", bal: 12500000000 },
-            { name: "Trùm Đất Cảng", bal: 8900000000 },
-            { name: "Thiếu Gia HN", bal: 5600000000 },
-            { name: "Chị Đại Q4", bal: 3200000000 },
-            { name: "Vua Lì Đòn", bal: 1500000000 },
-            { name: "Thánh Bịp", bal: 800000000 },
-            { name: "Boy Phố Cổ", bal: 450000000 },
-            { name: "Dân Chơi 9x", bal: 100000000 }
-        ];
-
-        // --- CHAT DATA ---
+        const PHASE_BET = 45;
+        const PHASE_LOCK = 50;
+        // NPC DATA
+        let npcPlayers = [ { name: "Top1_Server", bal: 50000000000 }, { name: "Shark Hưng", bal: 23000000000 }, { name: "Đại Gia 79", bal: 12500000000 }, { name: "Trùm Đất Cảng", bal: 8900000000 }, { name: "Thiếu Gia HN", bal: 5600000000 }, { name: "Chị Đại Q4", bal: 3200000000 }, { name: "Vua Lì Đòn", bal: 1500000000 }, { name: "Thánh Bịp", bal: 800000000 }, { name: "Boy Phố Cổ", bal: 450000000 }, { name: "Dân Chơi 9x", bal: 100000000 } ];
+        
+        // CHAT DATA
         const npcNames = ["Bố Già", "Trùm Cuối", "Thánh Bịp", "Kẻ Hủy Diệt", "Nợ Mẹ 500k", "Bán Nhà", "Xa Bờ", "Về Bờ", "Đại Gia Rởm", "Admin", "Chim Mồi", "Thích Ăn Đòn", "Boy Nhà Nghèo", "Cậu Vàng"];
         const chatWaiting = ["Tài đi dm sợ gì", "Xỉu chết cụ bọn Tài", "Bịp vcl", "Admin chỉnh cầu à?", "All in Tài đi các con vợ", "Nhanh cái tay lên", "Ván này k về Xỉu tao đi bằng đầu", "Dm lại gãy", "Cầu như l**", "Lag vãi chưởng", "Bố mày tất tay", "Xin 50k gỡ với ae ơi", "Thua thông 10 tay rồi dm", "Cầu bệt đẹp thế còn gì", "Đừng nghe thằng trên nó lừa đấy", "Chết mẹ mày đi", "Gáy sớm ăn l**", "Uy tín cái đầu b`"];
         const chatWinTai = ["TÀI!! Húp trọn", "Biết ngay mà dm", "Chết cụ bọn Xỉu nha", "Tài rực rỡ ae ơi", "Gáy lênnn", "Ối dồi ôi tiền về", "Dm lại Tài à", "Bịp bợm vcl", "Xóa game đây", "Cầu ảo vãi lúa", "Admin hút máu", "Tao bảo rồi mà éo nghe", "Ngu thì chết"];
@@ -227,7 +213,7 @@
             currentUser = u;
             document.getElementById('playerName').innerText = currentUser;
             document.getElementById('loginModal').style.display = 'none';
-            const stored = localStorage.getItem('taixiu_v10_' + currentUser);
+            const stored = localStorage.getItem('taixiu_v11_' + currentUser);
             if(stored) {
                 const d = JSON.parse(stored);
                 balance = d.b; transactionHistory = d.t || []; beadHistory = d.bd || [];
@@ -238,78 +224,32 @@
             updateBalance(); renderTransHistory(); beadHistory.forEach(r => renderBead(r));
             checkDonateButton(); initFakeUsers(); startRealtimeLoop(); startFakeChat(); changeVolume(0.5);
         }
-        function saveData() { if(currentUser) localStorage.setItem('taixiu_v10_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
+        function saveData() { if(currentUser) localStorage.setItem('taixiu_v11_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
         function logout() { location.reload(); }
 
-        // --- LEADERBOARD LOGIC ---
-        function updateNPCBalances() {
-            // Random biến động tiền của NPC sau mỗi ván
-            npcPlayers.forEach(npc => {
-                const isWin = Math.random() > 0.5;
-                const changePercent = Math.random() * 0.2; // Biến động tối đa 20% vốn
-                const changeAmt = Math.floor(npc.bal * changePercent);
-                if(isWin) npc.bal += changeAmt;
-                else npc.bal -= changeAmt;
-                if(npc.bal < 0) npc.bal = 0; // K được âm
-            });
-        }
-
-        function renderLeaderboard() {
-            // Gộp user vào list NPC để xếp hạng
-            let fullList = [...npcPlayers];
-            if(currentUser) {
-                fullList.push({ name: currentUser, bal: balance, isMe: true });
-            }
-            // Sắp xếp giảm dần
-            fullList.sort((a, b) => b.bal - a.bal);
-
-            // Render HTML
-            const tbody = document.getElementById('rankList');
-            let html = '';
-            fullList.forEach((p, index) => {
-                let rankClass = '';
-                if(index === 0) rankClass = 'rank-top1';
-                else if(index === 1) rankClass = 'rank-top2';
-                else if(index === 2) rankClass = 'rank-top3';
-                
-                let rowClass = p.isMe ? 'rank-me' : '';
-                let rankDisplay = index + 1;
-                
-                html += `<tr class="${rowClass}">
-                    <td class="${rankClass}">#${rankDisplay}</td>
-                    <td class="${rankClass}">${p.name} ${p.isMe ? '(Tôi)' : ''}</td>
-                    <td style="text-align:right; color:#ddd">${formatMoney(p.bal)}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function openRankModal() { renderLeaderboard(); document.getElementById('rankModal').style.display = 'flex'; }
-        function closeRankModal() { document.getElementById('rankModal').style.display = 'none'; }
-
         // --- REALTIME LOOP ---
-        let mainLoop, processedResult = false;
         function startRealtimeLoop() {
             mainLoop = setInterval(() => {
                 const now = new Date();
                 const seconds = now.getSeconds(); 
                 updateFakeUsers();
-                let displayTime = 0;
-                
+
                 if (seconds < PHASE_BET) {
-                    displayTime = PHASE_BET - seconds;
-                    document.getElementById('timerDisplay').innerText = displayTime;
+                    // GIAI ĐOẠN CƯỢC (0-45s)
+                    let dTime = PHASE_BET - seconds;
+                    document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "#ff3333";
                     document.getElementById('statusText').innerText = "MỜI ĐẶT CƯỢC";
                     if (isLocked) {
-                        isLocked = false;
+                        // Reset ván mới
+                        isLocked = false; hasPaid = false; isResultReady = false;
                         document.getElementById('controls').style.opacity="1"; document.getElementById('controls').style.pointerEvents="auto";
-                        resetBowl(); isResultReady = false; processedResult = false; 
-                        currentBet = 0; sideChosen = null; updateUI(); initFakeUsers();
+                        resetBowl(); currentBet = 0; sideChosen = null; updateUI(); initFakeUsers();
                     }
                 } else if (seconds < PHASE_LOCK) {
-                    displayTime = PHASE_LOCK - seconds;
-                    document.getElementById('timerDisplay').innerText = displayTime;
+                    // GIAI ĐOẠN KHÓA (45-50s)
+                    let dTime = PHASE_LOCK - seconds;
+                    document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "yellow";
                     document.getElementById('statusText').innerText = "ĐÃ KHÓA CƯỢC!";
                     if (!isLocked) {
@@ -317,31 +257,48 @@
                         document.getElementById('controls').style.opacity="0.5"; document.getElementById('controls').style.pointerEvents="none";
                     }
                 } else {
+                    // GIAI ĐOẠN XỬ LÝ (50s-59s)
                     document.getElementById('timerDisplay').innerText = "00";
-                    if (!processedResult) { processedResult = true; rollDiceAndPay(); }
+                    if (!isResultReady) {
+                        // Chưa có kết quả -> Lắc
+                        rollDice(); 
+                    } else {
+                        // Đã có kết quả -> Chờ mở
+                        if(!hasPaid) {
+                            // Nếu hết giờ mà chưa mở -> Tự mở
+                            // Nhưng để người chơi nặn, ta ko tự mở ngay lập tức ở s50
+                            // Ta đợi đến s58 mới tự mở nếu họ lì ko mở
+                             if(seconds > 58) forceOpenBowl();
+                        }
+                    }
                 }
             }, 1000);
         }
 
         const diceChars = ["1", "2", "3", "4", "5", "6"];
-        function rollDiceAndPay() {
+        function rollDice() {
             playSfx('sfxShake'); const bowl = document.getElementById('bowl'); bowl.classList.add('shaking'); document.getElementById('statusText').innerText="ĐANG LẮC...";
+            isResultReady = true; // Đánh dấu đã lắc
             setTimeout(() => {
                 bowl.classList.remove('shaking');
                 diceResults=[Math.floor(Math.random()*6)+1, Math.floor(Math.random()*6)+1, Math.floor(Math.random()*6)+1];
                 document.getElementById('d1').innerText=diceResults[0]; document.getElementById('d2').innerText=diceResults[1]; document.getElementById('d3').innerText=diceResults[2];
-                isResultReady = true; document.getElementById('statusText').innerText="MỞ BÁT!";
-                setTimeout(() => { forceOpenBowl(); }, 1500);
-            }, 1000);
+                document.getElementById('statusText').innerText="MỞ BÁT! (NẶN ĐÊ)";
+            }, 1500);
         }
-        function forceOpenBowl() { if(!isResultReady)return; const bowl=document.getElementById('bowl'); bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; checkWin(); }
+
+        // Logic checkWin quan trọng
         function checkWin() {
+            if(hasPaid) return; // Đã trả rồi thì thôi
+            hasPaid = true;
+
             const total = diceResults[0]+diceResults[1]+diceResults[2];
             const resultName = total > 10 ? 'TAI' : 'XIU';
             document.getElementById('statusText').innerText = `KẾT QUẢ: ${total} - ${resultName}`;
+            
             beadHistory.push(resultName); if(beadHistory.length > 20) beadHistory.shift(); renderBead(resultName);
-            burstChat(resultName);
-            updateNPCBalances(); // Cập nhật tiền NPC sau mỗi ván
+            burstChat(resultName); updateNPCBalances(); 
+
             if (currentBet > 0 && sideChosen) {
                 if (sideChosen === resultName) {
                     playSfx('sfxWin'); const win = currentBet * 2; balance += win;
@@ -353,7 +310,56 @@
             updateBalance(); checkDonateButton(); saveData();
         }
 
-        // --- UTILS & OTHERS ---
+        // --- DRAG ---
+        const bowl=document.getElementById('bowl'); let isD=false, sX, sY, iL, iT;
+        function resetBowl(){ bowl.style.transition="transform 0.5s, opacity 0.5s"; bowl.style.transform="translate(0,0)"; bowl.style.opacity="1"; setTimeout(()=>bowl.style.transition="none",500); }
+        bowl.addEventListener('mousedown', sD); bowl.addEventListener('touchstart', sD, {passive:false});
+        function sD(e){ if(!isResultReady || hasPaid) return; isD=true; let c=e.touches?e.touches[0]:e; sX=c.clientX; sY=c.clientY; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); iL=m.m41; iT=m.m42; }
+        document.addEventListener('mousemove', dD); document.addEventListener('touchmove', dD, {passive:false});
+        function dD(e){ if(!isD)return; e.preventDefault(); let c=e.touches?e.touches[0]:e; bowl.style.transform=`translate(${iL+c.clientX-sX}px, ${iT+c.clientY-sY}px)`; }
+        document.addEventListener('mouseup', eD); document.addEventListener('touchend', eD);
+        function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
+        
+        // Hàm mở bát bắt buộc
+        function forceOpenBowl() { 
+            if(hasPaid) return; // Nếu đã trả thưởng rồi thì ko chạy lại
+            const bowl=document.getElementById('bowl'); 
+            bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; 
+            checkWin(); 
+        }
+
+        // --- CHAT SYSTEM (SIÊU TỐC) ---
+        function pushChatSystem(list, isVip) {
+            const name = isVip ? "ĐẠI GIA" : npcNames[Math.floor(Math.random() * npcNames.length)];
+            const msg = list[Math.floor(Math.random() * list.length)];
+            const color = isVip ? "#ffd700" : `hsl(${Math.random() * 360}, 80%, 70%)`;
+            const box = document.getElementById('chatList');
+            box.innerHTML += `<div class="chat-msg"><span style="color:${color};font-weight:bold">${name}:</span> <span style="color:#eee">${msg}</span></div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+        function startFakeChat() { 
+            // Tốc độ chat: 0.2s - 0.8s (Nhanh hơn V10)
+            const d = Math.floor(Math.random() * 600) + 200; 
+            setTimeout(()=>{
+                // Chỉ chat nhảm khi chưa có kết quả
+                if(!hasPaid) pushChatSystem(chatWaiting, false); 
+                startFakeChat();
+            }, d); 
+        }
+        function burstChat(r) { 
+            // SPAM 10 tin nhắn liên tục khi có kết quả
+            let c=0; 
+            const i=setInterval(()=>{
+                pushChatSystem(r==='TAI'?chatWinTai:chatWinXiu, false);
+                c++; if(c>10) clearInterval(i);
+            }, 100); 
+        }
+
+        // --- UTILS ---
+        function updateNPCBalances() { npcPlayers.forEach(npc => { const isWin = Math.random() > 0.5; const changeAmt = Math.floor(npc.bal * (Math.random()*0.2)); if(isWin) npc.bal += changeAmt; else npc.bal -= changeAmt; if(npc.bal < 0) npc.bal = 0; }); }
+        function renderLeaderboard() { let fullList = [...npcPlayers]; if(currentUser) fullList.push({ name: currentUser, bal: balance, isMe: true }); fullList.sort((a, b) => b.bal - a.bal); const tbody = document.getElementById('rankList'); let html = ''; fullList.forEach((p, index) => { let rankClass = ''; if(index === 0) rankClass = 'rank-top1'; else if(index === 1) rankClass = 'rank-top2'; else if(index === 2) rankClass = 'rank-top3'; let rowClass = p.isMe ? 'rank-me' : ''; html += `<tr class="${rowClass}"><td class="${rankClass}">#${index + 1}</td><td class="${rankClass}">${p.name} ${p.isMe ? '(Tôi)' : ''}</td><td style="text-align:right; color:#ddd">${formatMoney(p.bal)}</td></tr>`; }); tbody.innerHTML = html; }
+        function openRankModal() { renderLeaderboard(); document.getElementById('rankModal').style.display = 'flex'; }
+        function closeRankModal() { document.getElementById('rankModal').style.display = 'none'; }
         function changeVolume(val) { const bg = document.getElementById('bgMusic'); bg.volume = val; if(val==0){document.getElementById('muteIcon').innerText="🔇";bg.pause();}else{document.getElementById('muteIcon').innerText="🔊";bg.play().catch(()=>{});} }
         function toggleMute() { const s = document.getElementById('volSlider'); if(s.value>0){s.value=0;changeVolume(0);}else{s.value=0.5;changeVolume(0.5);} }
         function playSfx(id){ const a=document.getElementById(id); if(a){ const v=document.getElementById('volSlider').value; a.volume=Math.min(1,v*1.2); a.currentTime=0; a.play().catch(()=>{}); } }
@@ -365,9 +371,6 @@
         function resolveDonate() { if(Math.random()>0.4){playSfx('sfxDonate');const a=Math.floor(Math.random()*20000)+1000;balance+=a;logTransaction('Donate',a,true);pushChatSystem(donateWinChat,true);showMsg(`+${formatMoney(a)}`,true);}else{pushChatSystem(donateLoseChat,true);showMsg("Đéo cho!",false);} updateBalance();checkDonateButton(); }
         function logTransaction(t,a,w) { const n=new Date(),s=`${n.getHours()}:${n.getMinutes()}`; transactionHistory.unshift({t:s,type:t,amt:a,sign:w?'+':'-',cls:w?'win':'loss'}); if(transactionHistory.length>50)transactionHistory.pop(); saveData();renderTransHistory(); }
         function renderTransHistory() { const l=document.getElementById('transList'); let h=''; if(transactionHistory.length===0)h='<div style="text-align:center;color:#555">Trống</div>'; else transactionHistory.forEach(x=>{h+=`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333;color:#ccc"><span style="font-size:11px;color:#777">${x.t}</span><span>${x.type}</span><span style="color:${x.cls=='win'?'#00e676':'#ff1744'}">${x.sign}${formatMoney(x.amt)}</span></div>`;}); l.innerHTML=h; }
-        function pushChatSystem(l,v) { const n=v?"ĐẠI GIA":npcNames[Math.floor(Math.random()*npcNames.length)], m=l[Math.floor(Math.random()*l.length)], c=v?"#ffd700":`hsl(${Math.random()*360},80%,70%)`, b=document.getElementById('chatList'); b.innerHTML+=`<div class="chat-msg"><span style="color:${c};font-weight:bold">${n}:</span> <span style="color:#eee">${m}</span></div>`; b.scrollTop=b.scrollHeight; }
-        function startFakeChat() { const d=Math.floor(Math.random()*1500)+500; setTimeout(()=>{if(!isResultReady)pushChatSystem(chatWaiting,false);startFakeChat();},d); }
-        function burstChat(r) { let c=0; const i=setInterval(()=>{pushChatSystem(r==='TAI'?chatWinTai:chatWinXiu,false);c++;if(c>6)clearInterval(i);},200); }
         function renderBead(r) { const d=document.getElementById('beadRoad'), b=document.createElement('div'); b.className=`bead ${r==='TAI'?'tai':'xiu'}`; b.innerText=r==='TAI'?'T':'X'; d.appendChild(b); d.scrollLeft=d.scrollWidth; }
         function chooseSide(s) { if(isLocked)return; if(currentBet>0 && s!==sideChosen){showMsg("K ĐỔI CỬA!", false);return;} sideChosen=s; updateUI(); }
         function addChip(a) { if(isLocked)return; if(!sideChosen){showMsg("CHỌN CỬA!", false);return;} if(balance<a){showMsg("NẠP ĐÊ!", false);return;} playSfx('sfxBet'); balance-=a; currentBet+=a; updateBalance(); updateUI(); }
@@ -380,15 +383,6 @@
         function showMsg(t,g) { const m=document.getElementById('msg'); m.innerText=t; m.style.color=g?'gold':'#fff'; m.style.borderColor=g?'gold':'red'; m.style.display='block'; setTimeout(()=>m.style.display='none',2000); }
         function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; }
         function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
-        const bowl=document.getElementById('bowl'); let isD=false, sX, sY, iL, iT;
-        function resetBowl(){ bowl.style.transition="transform 0.5s, opacity 0.5s"; bowl.style.transform="translate(0,0)"; bowl.style.opacity="1"; setTimeout(()=>bowl.style.transition="none",500); }
-        bowl.addEventListener('mousedown', sD); bowl.addEventListener('touchstart', sD, {passive:false});
-        function sD(e){ if(!isResultReady)return; isD=true; let c=e.touches?e.touches[0]:e; sX=c.clientX; sY=c.clientY; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); iL=m.m41; iT=m.m42; }
-        document.addEventListener('mousemove', dD); document.addEventListener('touchmove', dD, {passive:false});
-        function dD(e){ if(!isD)return; e.preventDefault(); let c=e.touches?e.touches[0]:e; bowl.style.transform=`translate(${iL+c.clientX-sX}px, ${iT+c.clientY-sY}px)`; }
-        document.addEventListener('mouseup', eD); document.addEventListener('touchend', eD);
-        function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
-        function forceOpenBowl(){ if(!isResultReady)return; clearTimeout(autoOpenTimeout); bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; bowl.style.pointerEvents="none"; checkWin(); }
     </script>
 </body>
 </html>
