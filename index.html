@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tài Xỉu V12 - Online Sync</title>
+    <title>Tài Xỉu V13 - Giftcode Admin</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -13,12 +13,24 @@
         /* UI CHUNG */
         .top-bar { width: 100%; padding: 10px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, #222, #000); border-bottom: 2px solid var(--gold-3); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 20; }
         .logout-btn { background: #333; border: 1px solid #555; color: #fff; padding: 5px 10px; border-radius: 5px; font-weight:bold; font-size: 10px; }
-        .balance-box { color: var(--gold-1); font-weight: 900; font-size: 18px; border: 2px solid var(--gold-2); padding: 5px 15px; border-radius: 20px; background: linear-gradient(to bottom, #333, #000); text-shadow: 0 0 5px var(--gold-1); }
+        .balance-box { 
+            display: flex; align-items: center; gap: 10px;
+            color: var(--gold-1); font-weight: 900; font-size: 18px; 
+            border: 2px solid var(--gold-2); padding: 5px 15px; border-radius: 20px; 
+            background: linear-gradient(to bottom, #333, #000); text-shadow: 0 0 5px var(--gold-1);
+        }
+        /* Nút Nạp Giftcode */
+        .add-money-btn {
+            background: #00e676; color: #000; border: none; border-radius: 50%;
+            width: 25px; height: 25px; font-size: 18px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 0 5px #00e676; animation: pulse 2s infinite;
+        }
+
         .game-board { position: relative; margin-top: 50px; width: 98%; max-width: 650px; height: 420px; background: var(--panel-bg); border-radius: 30px; border: 4px solid var(--gold-2); box-shadow: inset 0 0 50px #000, 0 0 20px var(--gold-3); display: flex; flex-direction: column; align-items: center; z-index: 10; }
         .game-board::before { content: ""; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 25px; pointer-events: none; }
         .timer-badge { position: absolute; top: -35px; background: radial-gradient(#000, #330000); color: #ff3333; font-size: 40px; font-weight: 900; padding: 5px 30px; border-radius: 25px; border: 3px solid var(--gold-1); box-shadow: 0 0 20px #ff0000; z-index: 100; text-shadow: 2px 2px 0 #000; }
         
-        /* BÁT ĐĨA */
         .plate-area { position: relative; width: 240px; height: 240px; margin-top: 40px; display: flex; justify-content: center; align-items: center; }
         .plate-base { position: absolute; width: 100%; height: 100%; background: radial-gradient(#555, #111); border-radius: 50%; border: 5px solid #444; box-shadow: 0 0 15px #000; }
         .dice-group { position: absolute; display: flex; gap: 8px; z-index: 5; }
@@ -28,7 +40,6 @@
         .shaking { animation: shake 0.4s infinite; }
         @keyframes shake { 0% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(5px,5px) rotate(2deg); } 50% { transform: translate(0,-5px) rotate(0deg); } 75% { transform: translate(-5px,5px) rotate(-2deg); } 100% { transform: translate(0,0) rotate(0deg); } }
 
-        /* CỬA CƯỢC */
         .bet-options { display: flex; justify-content: space-between; width: 100%; padding: 0 20px; position: absolute; bottom: 30px; box-sizing: border-box; }
         .bet-box { width: 130px; height: 120px; background: linear-gradient(145deg, #2b1d0e, #1a0f00); border: 2px solid var(--gold-3); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; position: relative; box-shadow: 0 5px 10px #000; }
         .bet-box.tai { color: #ffcc00; } .bet-box.xiu { color: #fff; }
@@ -37,7 +48,6 @@
         .bet-amount { font-size: 13px; color: #ddd; margin-top: 5px; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; font-family: monospace; }
         .user-badge { background: #000; color: #aaa; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-bottom: 5px; border: 1px solid #444; display: flex; align-items: center; gap: 3px; }
 
-        /* NÚT CHỨC NĂNG */
         .chip-bar { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; z-index: 10; }
         .chip { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); border: 3px dashed #fff; color: #4a2c00; font-weight: 900; font-size: 11px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 8px #000; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
         .chip:active { transform: scale(0.9); }
@@ -45,32 +55,29 @@
         .btn-confirm { background: linear-gradient(to bottom, #2e7d32, #1b5e20); border: 1px solid #4caf50; }
         .btn-cancel { background: linear-gradient(to bottom, #c62828, #b71c1c); border: 1px solid #ef5350; }
 
-        /* VOLUME & RANK BUTTON */
         .volume-control { position: fixed; bottom: 10px; left: 10px; z-index: 200; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid var(--gold-3); }
         .rank-btn { position: fixed; top: 70px; left: 10px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, #ffd700, #b8860b); border: 3px solid #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: 900; color: #4a2c00; box-shadow: 0 0 15px gold; cursor: pointer; z-index: 100; animation: pulse 2s infinite; }
         .rank-btn span { font-size: 10px; }
         .music-icon { font-size: 20px; cursor: pointer; }
         input[type=range] { width: 80px; accent-color: var(--gold-1); cursor: pointer; }
 
-        /* CHAT & DONATE */
         .chat-container { position: fixed; right: 10px; top: 70px; bottom: 80px; width: 240px; background: rgba(0,0,0,0.7); border: 1px solid var(--gold-3); border-radius: 10px; display: flex; flex-direction: column; z-index: 5; pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
         .chat-header { background: linear-gradient(to right, #333, #111); padding: 8px; text-align: center; font-size: 12px; font-weight: bold; border-radius: 10px 10px 0 0; color: var(--gold-1); border-bottom: 1px solid #444; }
         .chat-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; text-shadow: 1px 1px 0 #000; pointer-events: auto; scrollbar-width: thin; }
         .chat-msg { margin-bottom: 8px; line-height: 1.4; animation: fadeIn 0.1s; word-wrap: break-word; }
         @media (max-width: 900px) { .chat-container { display: none; } }
+        
         .donate-container { position: fixed; left: 10px; top: 140px; z-index: 50; display: flex; flex-direction: column; align-items: center; }
         .donate-btn { width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #e91e63, #880e4f); border: 3px solid #fff; box-shadow: 0 0 15px #ff4081; color: #fff; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .donate-btn:disabled { filter: grayscale(1); cursor: not-allowed; }
         .donate-timer { font-size: 14px; background: #000; color: #e91e63; padding: 2px 6px; border-radius: 5px; margin-top: 5px; display: none; border: 1px solid #e91e63; font-weight: bold; }
 
-        /* MODAL CHUNG */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: linear-gradient(135deg, #222, #111); border: 2px solid var(--gold-1); border-radius: 15px; width: 95%; max-width: 450px; padding: 0; display: flex; flex-direction: column; box-shadow: 0 0 30px var(--gold-3); max-height: 80vh; }
         .modal-header { padding: 15px; background: #000; border-bottom: 1px solid var(--gold-3); display: flex; justify-content: space-between; align-items: center; border-radius: 13px 13px 0 0; }
         .modal-body { padding: 10px; overflow-y: auto; color: #ddd; font-size: 13px; }
-        .login-input { width: 80%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--gold-3); background: #000; color: var(--gold-1); font-size: 18px; align-self: center; text-align: center; font-weight: bold; }
+        .login-input { width: 80%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--gold-3); background: #000; color: var(--gold-1); font-size: 18px; align-self: center; text-align: center; font-weight: bold; text-transform: uppercase; }
         
-        /* TABLE RANK */
         .rank-table { width: 100%; border-collapse: collapse; }
         .rank-table th { background: #333; color: var(--gold-1); padding: 10px; text-align: left; font-size: 12px; }
         .rank-table td { padding: 10px; border-bottom: 1px solid #333; font-size: 13px; }
@@ -114,8 +121,8 @@
 
     <div class="modal" id="loginModal" style="display:flex;">
         <div class="modal-content" style="padding: 20px;">
-            <h2 style="color:var(--gold-1); margin:0 0 10px 0; text-align: center;">🔥 ONLINE SYNC V12 🔥</h2>
-            <p style="color:#aaa; font-size:14px; text-align: center;">Kết quả đồng bộ thời gian thực.</p>
+            <h2 style="color:var(--gold-1); margin:0 0 10px 0; text-align: center;">🔥 ONLINE SYNC V13 🔥</h2>
+            <p style="color:#aaa; font-size:14px; text-align: center;">V13 - Giftcode Admin System</p>
             <input type="text" id="usernameInput" class="login-input" placeholder="Tên Đại Gia..." onkeypress="if(event.keyCode==13) login()">
             <button class="btn-action btn-confirm" style="padding:15px; width:80%; align-self:center; font-size: 16px;" onclick="login()">VÀO SÒNG</button>
         </div>
@@ -123,7 +130,10 @@
 
     <div class="top-bar">
         <div><span style="color:#aaa; font-size:12px;">TK:</span> <strong id="playerName" style="color:#fff; font-size:14px;">...</strong> <button class="logout-btn" onclick="logout()">Thoát</button></div>
-        <div class="balance-box"><span style="color:#ddd; font-size:14px">$</span> <span id="balanceDisplay">0</span></div>
+        <div class="balance-box">
+            <span style="color:#ddd; font-size:14px">$</span> <span id="balanceDisplay">0</span>
+            <button class="add-money-btn" onclick="openGiftcodeModal()">+</button>
+        </div>
     </div>
 
     <div class="game-board">
@@ -183,6 +193,18 @@
         </div>
     </div>
 
+    <div class="modal" id="giftcodeModal">
+        <div class="modal-content" style="padding: 20px;">
+            <div class="modal-header" style="background:transparent; border:none; padding:0; justify-content:flex-end;">
+                <button class="btn-action btn-cancel" style="padding:5px 10px; margin:0;" onclick="closeGiftcodeModal()">×</button>
+            </div>
+            <h2 style="color:var(--gold-1); text-align: center; margin-top:0;">NẠP GIFTCODE</h2>
+            <p style="color:#aaa; font-size:13px; text-align: center;">Nhập mã code từ Admin để nhận tiền.</p>
+            <input type="text" id="giftcodeInput" class="login-input" placeholder="Nhập mã tại đây...">
+            <button class="btn-action btn-confirm" style="padding:12px; margin-top:10px; width:100%;" onclick="redeemCode()">XÁC NHẬN</button>
+        </div>
+    </div>
+
     <script>
         // --- DATA ---
         let balance = 0, currentUser = null;
@@ -213,7 +235,7 @@
             currentUser = u;
             document.getElementById('playerName').innerText = currentUser;
             document.getElementById('loginModal').style.display = 'none';
-            const stored = localStorage.getItem('taixiu_v12_' + currentUser);
+            const stored = localStorage.getItem('taixiu_v13_' + currentUser);
             if(stored) {
                 const d = JSON.parse(stored);
                 balance = d.b; transactionHistory = d.t || []; beadHistory = d.bd || [];
@@ -224,15 +246,41 @@
             updateBalance(); renderTransHistory(); beadHistory.forEach(r => renderBead(r));
             checkDonateButton(); initFakeUsers(); startRealtimeLoop(); startFakeChat(); changeVolume(0.5);
         }
-        function saveData() { if(currentUser) localStorage.setItem('taixiu_v12_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
+        function saveData() { if(currentUser) localStorage.setItem('taixiu_v13_' + currentUser, JSON.stringify({b:balance, t:transactionHistory, bd:beadHistory})); }
         function logout() { location.reload(); }
 
-        // --- SEEDED RANDOM (ĐÂY LÀ CHÌA KHÓA ĐỂ ĐỒNG BỘ) ---
-        // Hàm tạo số ngẫu nhiên dựa trên "Hạt giống" (Seed)
-        function seededRandom(seed) {
-            var x = Math.sin(seed++) * 10000;
-            return x - Math.floor(x);
+        // --- GIFTCODE SYSTEM ---
+        const validCodes = {
+            "TANTHU": 500000,
+            "VEBO": 100000000,
+            "ADMIN": 1000000000,
+            "ALLIN": 5000000000
+        };
+
+        function openGiftcodeModal() { document.getElementById('giftcodeModal').style.display = 'flex'; }
+        function closeGiftcodeModal() { document.getElementById('giftcodeModal').style.display = 'none'; }
+        
+        function redeemCode() {
+            const input = document.getElementById('giftcodeInput');
+            const code = input.value.trim().toUpperCase();
+            
+            if(validCodes[code]) {
+                const amt = validCodes[code];
+                balance += amt;
+                logTransaction('Giftcode', amt, true);
+                showMsg(`NẠP THÀNH CÔNG ${formatMoney(amt)}`, true);
+                playSfx('sfxWin');
+                updateBalance();
+                saveData();
+                closeGiftcodeModal();
+                input.value = ""; // Xóa input
+            } else {
+                alert("Mã không đúng hoặc đã hết hạn!");
+            }
         }
+
+        // --- SEEDED RANDOM ---
+        function seededRandom(seed) { var x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
 
         // --- REALTIME LOOP ---
         function startRealtimeLoop() {
@@ -242,7 +290,6 @@
                 updateFakeUsers();
 
                 if (seconds < PHASE_BET) {
-                    // GIAI ĐOẠN CƯỢC
                     let dTime = PHASE_BET - seconds;
                     document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "#ff3333";
@@ -253,7 +300,6 @@
                         resetBowl(); currentBet = 0; sideChosen = null; updateUI(); initFakeUsers();
                     }
                 } else if (seconds < PHASE_LOCK) {
-                    // GIAI ĐOẠN KHÓA
                     let dTime = PHASE_LOCK - seconds;
                     document.getElementById('timerDisplay').innerText = dTime;
                     document.getElementById('timerDisplay').style.color = "yellow";
@@ -263,40 +309,20 @@
                         document.getElementById('controls').style.opacity="0.5"; document.getElementById('controls').style.pointerEvents="none";
                     }
                 } else {
-                    // GIAI ĐOẠN XỬ LÝ (50s-59s)
                     document.getElementById('timerDisplay').innerText = "00";
-                    if (!isResultReady) {
-                        rollDiceSynced(); // Lắc theo đồng bộ
-                    } else {
-                        if(!hasPaid && seconds > 58) forceOpenBowl();
-                    }
+                    if (!isResultReady) { rollDiceSynced(); } 
+                    else { if(!hasPaid && seconds > 58) forceOpenBowl(); }
                 }
             }, 1000);
         }
 
         const diceChars = ["1", "2", "3", "4", "5", "6"];
-        
-        // HÀM LẮC ĐỒNG BỘ (QUAN TRỌNG)
         function rollDiceSynced() {
             playSfx('sfxShake'); const bowl = document.getElementById('bowl'); bowl.classList.add('shaking'); document.getElementById('statusText').innerText="ĐANG LẮC...";
             isResultReady = true;
-            
-            // Lấy thời gian hiện tại làm hạt giống (theo Phút)
-            const now = new Date();
-            // Seed = Số phút tính từ năm 1970 (đảm bảo mỗi phút là 1 seed duy nhất)
-            const seed = Math.floor(now.getTime() / 60000); 
-            
-            // Dùng seed để tạo 3 số ngẫu nhiên GIỐNG HỆT NHAU trên mọi máy
-            const r1 = seededRandom(seed);
-            const r2 = seededRandom(seed + 1);
-            const r3 = seededRandom(seed + 2);
-            
-            diceResults = [
-                Math.floor(r1 * 6) + 1,
-                Math.floor(r2 * 6) + 1,
-                Math.floor(r3 * 6) + 1
-            ];
-
+            const now = new Date(); const seed = Math.floor(now.getTime() / 60000); 
+            const r1 = seededRandom(seed); const r2 = seededRandom(seed + 1); const r3 = seededRandom(seed + 2);
+            diceResults = [Math.floor(r1 * 6) + 1, Math.floor(r2 * 6) + 1, Math.floor(r3 * 6) + 1];
             setTimeout(() => {
                 bowl.classList.remove('shaking');
                 document.getElementById('d1').innerText=diceResults[0]; document.getElementById('d2').innerText=diceResults[1]; document.getElementById('d3').innerText=diceResults[2];
@@ -305,16 +331,12 @@
         }
 
         function checkWin() {
-            if(hasPaid) return; 
-            hasPaid = true;
-
+            if(hasPaid) return; hasPaid = true;
             const total = diceResults[0]+diceResults[1]+diceResults[2];
             const resultName = total > 10 ? 'TAI' : 'XIU';
             document.getElementById('statusText').innerText = `KẾT QUẢ: ${total} - ${resultName}`;
-            
             beadHistory.push(resultName); if(beadHistory.length > 20) beadHistory.shift(); renderBead(resultName);
             burstChat(resultName); updateNPCBalances(); 
-
             if (currentBet > 0 && sideChosen) {
                 if (sideChosen === resultName) {
                     playSfx('sfxWin'); const win = currentBet * 2; balance += win;
@@ -326,7 +348,7 @@
             updateBalance(); checkDonateButton(); saveData();
         }
 
-        // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
+        // --- COMMON FUNCS ---
         const bowl=document.getElementById('bowl'); let isD=false, sX, sY, iL, iT;
         function resetBowl(){ bowl.style.transition="transform 0.5s, opacity 0.5s"; bowl.style.transform="translate(0,0)"; bowl.style.opacity="1"; setTimeout(()=>bowl.style.transition="none",500); }
         bowl.addEventListener('mousedown', sD); bowl.addEventListener('touchstart', sD, {passive:false});
@@ -336,6 +358,7 @@
         document.addEventListener('mouseup', eD); document.addEventListener('touchend', eD);
         function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
         function forceOpenBowl() { if(hasPaid) return; const bowl=document.getElementById('bowl'); bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; checkWin(); }
+        
         function pushChatSystem(list, isVip) { const name = isVip ? "ĐẠI GIA" : npcNames[Math.floor(Math.random() * npcNames.length)]; const msg = list[Math.floor(Math.random() * list.length)]; const color = isVip ? "#ffd700" : `hsl(${Math.random() * 360}, 80%, 70%)`; const box = document.getElementById('chatList'); box.innerHTML += `<div class="chat-msg"><span style="color:${color};font-weight:bold">${name}:</span> <span style="color:#eee">${msg}</span></div>`; box.scrollTop = box.scrollHeight; }
         function startFakeChat() { const d = Math.floor(Math.random() * 600) + 200; setTimeout(()=>{ if(!hasPaid) pushChatSystem(chatWaiting, false); startFakeChat(); }, d); }
         function burstChat(r) { let c=0; const i=setInterval(()=>{ pushChatSystem(r==='TAI'?chatWinTai:chatWinXiu, false); c++; if(c>10) clearInterval(i); }, 100); }
