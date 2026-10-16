@@ -34,7 +34,8 @@
         .plate-area { position: relative; width: 240px; height: 240px; margin-top: 40px; display: flex; justify-content: center; align-items: center; }
         .plate-base { position: absolute; width: 100%; height: 100%; background: radial-gradient(#555, #111); border-radius: 50%; border: 5px solid #444; box-shadow: 0 0 15px #000; }
         .dice-group { position: absolute; display: flex; gap: 8px; z-index: 5; }
-        .dice { width: 50px; height: 50px; background: #fff; border-radius: 10px; color: #d32f2f; font-size: 38px; display: flex; justify-content: center; align-items: center; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2), 2px 2px 5px #000; border: 1px solid #ddd; }
+        .dice { width: 50px; height: 50px; background: #fff; border-radius: 10px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 7px; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2), 2px 2px 5px #000; border: 1px solid #ddd; }
+        .pip { width: 9px; height: 9px; background: #d32f2f; border-radius: 50%; place-self: center; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3); }
         .bowl-lid { position: absolute; width: 250px; height: 250px; background: radial-gradient(circle at 35% 35%, #e6ac00, #b8860b, #5a3a00); border-radius: 50%; border: 3px solid #ffd700; box-shadow: inset -10px -10px 30px rgba(0,0,0,0.6), 0 15px 30px rgba(0,0,0,0.9); z-index: 50; cursor: move; display: flex; justify-content: center; align-items: center; transition: transform 0.1s; }
         .bowl-lid::after { content: "RỒNG VÀNG"; color: rgba(255,255,255,0.2); font-weight: 900; font-size: 24px; text-shadow: 0 2px 2px rgba(0,0,0,0.5); }
         .shaking { animation: shake 0.4s infinite; }
@@ -141,7 +142,7 @@
         <div class="timer-badge" id="timerDisplay">--</div>
         <div class="plate-area">
             <div class="plate-base"></div>
-            <div class="dice-group"><div class="dice" id="d1">?</div><div class="dice" id="d2">?</div><div class="dice" id="d3">?</div></div>
+            <div class="dice-group"><div class="dice" id="d1"></div><div class="dice" id="d2"></div><div class="dice" id="d3"></div></div>
             <div class="bowl-lid" id="bowl"></div>
         </div>
         <div id="statusText" style="margin-top: 15px; color: var(--gold-2); font-weight: bold; font-style: italic; font-size: 16px; text-shadow: 1px 1px 0 #000;">ĐANG ĐỒNG BỘ...</div>
@@ -330,7 +331,13 @@
             }, 1000);
         }
 
-        const diceChars = ["1", "2", "3", "4", "5", "6"];
+        // Render a dice face with pips (real dice look) instead of a plain number
+        function diceHTML(v) {
+            const layouts = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
+            let cells = '';
+            for (let i = 1; i <= 9; i++) cells += layouts[v].includes(i) ? '<div class="pip"></div>' : '<div></div>';
+            return cells;
+        }
         function rollDiceSynced() {
             playSfx('sfxShake'); const bowl = document.getElementById('bowl'); bowl.classList.add('shaking'); document.getElementById('statusText').innerText="ĐANG LẮC...";
             isResultReady = true;
@@ -339,7 +346,7 @@
             diceResults = [Math.floor(r1 * 6) + 1, Math.floor(r2 * 6) + 1, Math.floor(r3 * 6) + 1];
             setTimeout(() => {
                 bowl.classList.remove('shaking');
-                document.getElementById('d1').innerText=diceResults[0]; document.getElementById('d2').innerText=diceResults[1]; document.getElementById('d3').innerText=diceResults[2];
+                document.getElementById('d1').innerHTML=diceHTML(diceResults[0]); document.getElementById('d2').innerHTML=diceHTML(diceResults[1]); document.getElementById('d3').innerHTML=diceHTML(diceResults[2]);
                 document.getElementById('statusText').innerText="MỞ BÁT! (NẶN ĐÊ)";
             }, 1500);
         }
@@ -401,6 +408,8 @@
         function updateBalance() { document.getElementById('balanceDisplay').innerText=formatMoney(balance); }
         function formatMoney(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
         function showMsg(t,g) { const m=document.getElementById('msg'); m.innerText=t; m.style.color=g?'gold':'#fff'; m.style.borderColor=g?'gold':'red'; m.style.display='block'; setTimeout(()=>m.style.display='none',2000); }
+        // Show dice faces on load so the board never looks empty
+        ['d1','d2','d3'].forEach(id => document.getElementById(id).innerHTML = diceHTML(Math.floor(Math.random()*6)+1));
         function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; }
         function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
     </script>
