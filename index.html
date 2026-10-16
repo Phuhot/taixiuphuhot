@@ -66,6 +66,7 @@
         .chat-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; text-shadow: 1px 1px 0 #000; pointer-events: auto; scrollbar-width: thin; }
         .chat-msg { margin-bottom: 8px; line-height: 1.4; animation: fadeIn 0.1s; word-wrap: break-word; }
         @media (max-width: 900px) { .chat-container { display: none; } }
+        @media (max-height: 700px) { body { overflow-y: auto; } .game-board { margin-top: 20px; } }
         
         .donate-container { position: fixed; left: 10px; top: 140px; z-index: 50; display: flex; flex-direction: column; align-items: center; }
         .donate-btn { width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #e91e63, #880e4f); border: 3px solid #fff; box-shadow: 0 0 15px #ff4081; color: #fff; font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
@@ -200,7 +201,7 @@
             </div>
             <h2 style="color:var(--gold-1); text-align: center; margin-top:0;">NẠP GIFTCODE</h2>
             <p style="color:#aaa; font-size:13px; text-align: center;">Nhập mã code từ Admin để nhận tiền.</p>
-            <input type="text" id="giftcodeInput" class="login-input" placeholder="Nhập mã tại đây...">
+            <input type="text" id="giftcodeInput" class="login-input" placeholder="Nhập mã tại đây..." onkeypress="if(event.keyCode==13) redeemCode()">
             <button class="btn-action btn-confirm" style="padding:12px; margin-top:10px; width:100%;" onclick="redeemCode()">XÁC NHẬN</button>
         </div>
     </div>
@@ -254,7 +255,10 @@
             "TANTHU": 500000,
             "VEBO": 100000000,
             "ADMIN": 1000000000,
-            "ALLIN": 5000000000
+            "ALLIN": 5000000000,
+            "PHUHOT": 20000000,
+            "LUCKY": 88888888,
+            "VIP": 500000000
         };
 
         function openGiftcodeModal() { document.getElementById('giftcodeModal').style.display = 'flex'; }
@@ -263,20 +267,30 @@
         function redeemCode() {
             const input = document.getElementById('giftcodeInput');
             const code = input.value.trim().toUpperCase();
-            
-            if(validCodes[code]) {
-                const amt = validCodes[code];
-                balance += amt;
-                logTransaction('Giftcode', amt, true);
-                showMsg(`NẠP THÀNH CÔNG ${formatMoney(amt)}`, true);
-                playSfx('sfxWin');
-                updateBalance();
-                saveData();
-                closeGiftcodeModal();
-                input.value = ""; // Xóa input
-            } else {
+
+            if(!validCodes[code]) {
                 alert("Mã không đúng hoặc đã hết hạn!");
+                return;
             }
+            // Mỗi code chỉ đổi được 1 lần cho mỗi tài khoản (tránh spam ADMIN/ALLIN lấy tiền vô hạn)
+            const usedKey = 'taixiu_v13_used_' + currentUser;
+            const used = JSON.parse(localStorage.getItem(usedKey) || '[]');
+            if(used.includes(code)) {
+                alert("Mã này đã được sử dụng rồi!");
+                return;
+            }
+            used.push(code);
+            localStorage.setItem(usedKey, JSON.stringify(used));
+
+            const amt = validCodes[code];
+            balance += amt;
+            logTransaction('Giftcode', amt, true);
+            showMsg(`NẠP THÀNH CÔNG ${formatMoney(amt)}`, true);
+            playSfx('sfxWin');
+            updateBalance();
+            saveData();
+            closeGiftcodeModal();
+            input.value = ""; // Xóa input
         }
 
         // --- SEEDED RANDOM ---
@@ -352,11 +366,11 @@
         const bowl=document.getElementById('bowl'); let isD=false, sX, sY, iL, iT;
         function resetBowl(){ bowl.style.transition="transform 0.5s, opacity 0.5s"; bowl.style.transform="translate(0,0)"; bowl.style.opacity="1"; setTimeout(()=>bowl.style.transition="none",500); }
         bowl.addEventListener('mousedown', sD); bowl.addEventListener('touchstart', sD, {passive:false});
-        function sD(e){ if(!isResultReady || hasPaid) return; isD=true; let c=e.touches?e.touches[0]:e; sX=c.clientX; sY=c.clientY; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); iL=m.m41; iT=m.m42; }
+        function sD(e){ if(!isResultReady || hasPaid) return; isD=true; let c=e.touches?e.touches[0]:e; sX=c.clientX; sY=c.clientY; let st=window.getComputedStyle(bowl); let m=new DOMMatrix(st.transform); iL=m.m41; iT=m.m42; }
         document.addEventListener('mousemove', dD); document.addEventListener('touchmove', dD, {passive:false});
         function dD(e){ if(!isD)return; e.preventDefault(); let c=e.touches?e.touches[0]:e; bowl.style.transform=`translate(${iL+c.clientX-sX}px, ${iT+c.clientY-sY}px)`; }
         document.addEventListener('mouseup', eD); document.addEventListener('touchend', eD);
-        function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new WebKitCSSMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
+        function eD(){ if(!isD)return; isD=false; let st=window.getComputedStyle(bowl); let m=new DOMMatrix(st.transform); if(Math.sqrt(m.m41**2+m.m42**2)>80) forceOpenBowl(); }
         function forceOpenBowl() { if(hasPaid) return; const bowl=document.getElementById('bowl'); bowl.style.transition="opacity 0.3s"; bowl.style.opacity="0"; checkWin(); }
         
         function pushChatSystem(list, isVip) { const name = isVip ? "ĐẠI GIA" : npcNames[Math.floor(Math.random() * npcNames.length)]; const msg = list[Math.floor(Math.random() * list.length)]; const color = isVip ? "#ffd700" : `hsl(${Math.random() * 360}, 80%, 70%)`; const box = document.getElementById('chatList'); box.innerHTML += `<div class="chat-msg"><span style="color:${color};font-weight:bold">${name}:</span> <span style="color:#eee">${msg}</span></div>`; box.scrollTop = box.scrollHeight; }
@@ -375,7 +389,7 @@
         function checkDonateButton() { const a=document.getElementById('donateArea'); if(balance<=50000){a.style.display='flex';document.getElementById('btnDonate').disabled=false;}else{a.style.display='none';} }
         function kheuDonate() { if(balance>50000)return alert("Giàu rồi xin cái gì!"); const b=document.getElementById('btnDonate'),t=document.getElementById('donateTimer'); b.disabled=true; t.style.display='block'; let c=10; t.innerText=c; const i=setInterval(()=>{c--;t.innerText=c;if(c<=0){clearInterval(i);t.style.display='none';resolveDonate();}},1000); }
         function resolveDonate() { if(Math.random()>0.4){playSfx('sfxDonate');const a=Math.floor(Math.random()*20000)+1000;balance+=a;logTransaction('Donate',a,true);pushChatSystem(donateWinChat,true);showMsg(`+${formatMoney(a)}`,true);}else{pushChatSystem(donateLoseChat,true);showMsg("Đéo cho!",false);} updateBalance();checkDonateButton(); }
-        function logTransaction(t,a,w) { const n=new Date(),s=`${n.getHours()}:${n.getMinutes()}`; transactionHistory.unshift({t:s,type:t,amt:a,sign:w?'+':'-',cls:w?'win':'loss'}); if(transactionHistory.length>50)transactionHistory.pop(); saveData();renderTransHistory(); }
+        function logTransaction(t,a,w) { const n=new Date(),s=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; transactionHistory.unshift({t:s,type:t,amt:a,sign:w?'+':'-',cls:w?'win':'loss'}); if(transactionHistory.length>50)transactionHistory.pop(); saveData();renderTransHistory(); }
         function renderTransHistory() { const l=document.getElementById('transList'); let h=''; if(transactionHistory.length===0)h='<div style="text-align:center;color:#555">Trống</div>'; else transactionHistory.forEach(x=>{h+=`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333;color:#ccc"><span style="font-size:11px;color:#777">${x.t}</span><span>${x.type}</span><span style="color:${x.cls=='win'?'#00e676':'#ff1744'}">${x.sign}${formatMoney(x.amt)}</span></div>`;}); l.innerHTML=h; }
         function renderBead(r) { const d=document.getElementById('beadRoad'), b=document.createElement('div'); b.className=`bead ${r==='TAI'?'tai':'xiu'}`; b.innerText=r==='TAI'?'T':'X'; d.appendChild(b); d.scrollLeft=d.scrollWidth; }
         function chooseSide(s) { if(isLocked)return; if(currentBet>0 && s!==sideChosen){showMsg("K ĐỔI CỬA!", false);return;} sideChosen=s; updateUI(); }
